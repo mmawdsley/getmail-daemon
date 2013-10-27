@@ -20,14 +20,14 @@ DAEMON=/home/mmawdsley/getmail/getmail.py
 . /lib/lsb/init-functions
 
 start_daemon () {
-    start-stop-daemon --background --start \
-        --pidfile $PIDFILE \
-        --make-pidfile --chuid $USER --user $USER --group $GROUP \
-        --exec $DAEMON
+  start-stop-daemon --background --start \
+    --pidfile $PIDFILE \
+    --make-pidfile --chuid $USER --user $USER --group $GROUP \
+    --exec $DAEMON
 }
 
 stop_daemon () {
-    start-stop-daemon --stop --pidfile $PIDFILE
+  start-stop-daemon --stop --pidfile $PIDFILE
 }
 
 case $1 in

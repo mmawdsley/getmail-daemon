@@ -19,26 +19,32 @@ DAEMON=/home/mmawdsley/getmail/getmail.py
 
 . /lib/lsb/init-functions
 
-case $1 in
-  start)
-    log_daemon_msg "Starting getmail script" "getmail"
-
+start_daemon () {
     start-stop-daemon --background --start \
         --pidfile $PIDFILE \
         --make-pidfile --chuid $USER --user $USER --group $GROUP \
         --exec $DAEMON
+}
 
+stop_daemon () {
+    start-stop-daemon --stop --pidfile $PIDFILE
+}
+
+case $1 in
+  start)
+    log_daemon_msg "Starting getmail script" "getmail"
+    start_daemon
     log_end_msg $?
   ;;
   stop)
     log_daemon_msg "Stopping getmail script" "getmail"
-    start-stop-daemon --stop --pidfile $PIDFILE
+    stop_daemon
     log_end_msg $?
   ;;
   restart | reload | force-reload | graceful)
     log_daemon_msg "Reloading getmail script" "getmail"
-    stop_daemon ()
-    start_daemon ()
+    stop_daemon
+    start_daemon
     log_end_msg 0
   ;;
   *)

@@ -103,7 +103,7 @@ class Getmail ():
       if p.poll () is not None:
         return
 
-      if self._running == False or datetime.now () > end:
+      if datetime.now () > end:
         p.kill ()
         return
 

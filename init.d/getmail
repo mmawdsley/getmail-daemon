@@ -47,6 +47,9 @@ case $1 in
     start_daemon
     log_end_msg 0
   ;;
+  status)
+    status_of_proc -p "$PIDFILE" "$DAEMON" getmail && exit 0 || exit $?
+  ;;
   *)
     exit 1
   ;;

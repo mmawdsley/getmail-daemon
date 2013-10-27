@@ -25,7 +25,7 @@ case $1 in
 
     start-stop-daemon --background --start \
         --pidfile $PIDFILE \
-        --make-pidfile --user $USER --group $GROUP \
+        --make-pidfile --chuid $USER --user $USER --group $GROUP \
         --exec $DAEMON
 
     log_end_msg $?

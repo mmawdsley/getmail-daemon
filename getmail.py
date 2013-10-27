@@ -67,9 +67,9 @@ class Getmail ():
     settings = self._accounts[account]
 
     lock_path = "%s/%s.lock" % (self._config_dir, account)
-    config_arg = "--rcfile=%s/%s.rc" % (self._config_dir, account)
+    config_file = "%s.rc" % account
 
-    command = ["/usr/bin/setlock", "-n", lock_path, "/usr/bin/getmail", "--quiet", config_arg]
+    command = ["/usr/bin/setlock", "-n", lock_path, "/usr/bin/getmail", "--getmaildir", self._config_dir, "--rcfile", config_file]
 
     self._threads[account] = Thread (None, self._account_handler, None, [command, settings["interval"], settings["limit"]])
 

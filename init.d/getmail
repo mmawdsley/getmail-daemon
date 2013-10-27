@@ -1,0 +1,47 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          getmail
+# Required-Start:    $local_fs $remote_fs $network $syslog $named
+# Required-Stop:     $local_fs $remote_fs $network $syslog $named
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# X-Interactive:     true
+# Short-Description: Start/stop getmail script handler
+### END INIT INFO
+
+set -e
+
+NAME=getmail
+PIDFILE=/home/mmawdsley/getmail/getmail.pid
+USER=mmawdsley
+GROUP=mmawdsley
+DAEMON=/home/mmawdsley/getmail/getmail.py
+
+. /lib/lsb/init-functions
+
+case $1 in
+  start)
+    log_daemon_msg "Starting getmail script" "getmail"
+
+    start-stop-daemon --background --start \
+        --pidfile $PIDFILE \
+        --make-pidfile --user $USER --group $GROUP \
+        --exec $DAEMON
+
+    log_end_msg $?
+  ;;
+  stop)
+    log_daemon_msg "Stopping getmail script" "getmail"
+    start-stop-daemon --stop --pidfile $PIDFILE
+    log_end_msg $?
+  ;;
+  restart | reload | force-reload | graceful)
+    log_daemon_msg "Reloading getmail script" "getmail"
+    stop_daemon ()
+    start_daemon ()
+    log_end_msg 0
+  ;;
+  *)
+    exit 1
+  ;;
+esac

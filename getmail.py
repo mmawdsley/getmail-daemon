@@ -5,7 +5,6 @@ import signal
 
 from subprocess import Popen
 from datetime import datetime, timedelta
-from os.path import expanduser
 from time import sleep
 from threading import Thread
 
@@ -13,7 +12,7 @@ class Getmail ():
 
   def __init__ (self):
 
-    self._config_dir = "%s/.getmail" % expanduser ("~")
+    self._config_dir = "/home/mmawdsley/.getmail"
     self._running = False
     self._threads = {}
     self._accounts = {
@@ -22,7 +21,7 @@ class Getmail ():
       "gmail" : { "interval" : 5, "limit" : 10 }
     }
 
-    self._setup_signal ()
+    self._setup_signal_handlers ()
 
     for account in self._accounts:
       self._setup_account_thread (account)
@@ -49,7 +48,7 @@ class Getmail ():
     self._running = False
 
 
-  def _setup_signal (self):
+  def _setup_signal_handlers (self):
     """Sets up the signal handlers"""
 
     signal.signal (signal.SIGINT, self._signal_handler)

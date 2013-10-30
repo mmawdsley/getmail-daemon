@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import signal
+import syslog
 
 from subprocess import Popen
 from datetime import datetime, timedelta
@@ -105,9 +106,17 @@ class Getmail ():
 
       if datetime.now () > end:
         p.kill ()
+        self._log_kill (p.pid, command, limit)
         return
 
       sleep (1)
+
+
+  def _log_kill (self, pid, command, limit):
+    """Logs that a process was killed"""
+
+    message = "Killed process %d after %d minutes (%s)" % (pid, limit, " ".join (command))
+    syslog.syslog (syslog.LOG_ERR, message)
 
 
 if __name__ == "__main__":

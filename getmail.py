@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import ConfigParser
+import os
 import signal
 import syslog
 
@@ -13,19 +15,12 @@ class Getmail ():
 
   def __init__ (self):
 
-    self._config_dir = "/home/mmawdsley/.getmail"
+    self._config_path = "/etc/getmail-daemon.conf"
     self._running = False
-    self._threads = {}
-    self._accounts = {
-      "blueyonder" : { "interval" : 2, "limit" : 10 },
-      "hallnet" : { "interval" : 1, "limit" : 10 },
-      "gmail" : { "interval" : 5, "limit" : 10 }
-    }
+    self._threads = []
 
     self._setup_signal_handlers ()
-
-    for account in self._accounts:
-      self._setup_account_thread (account)
+    self._load_config ()
 
 
   def start (self):
@@ -34,19 +29,41 @@ class Getmail ():
     self._running = True
 
     for thread in self._threads:
-      self._threads[thread].start ()
+      thread.start ()
 
     while self._running == True:
       sleep (1)
 
     for thread in self._threads:
-      self._threads[thread].join ()
+      thread.join ()
 
 
   def exit (self):
     """Stops the class"""
 
     self._running = False
+
+
+  def _load_config (self):
+    """Loads in the configuration"""
+
+    parser = ConfigParser.ConfigParser ()
+    parser.read (self._config_path)
+
+    for section in parser.sections ():
+
+      try:
+
+        user = parser.get (section, "user")
+        config = parser.get (section, "config")
+        interval = parser.getint (section, "interval")
+        limit = parser.getint (section, "limit")
+
+        self._setup_account (user, config, interval, limit)
+
+      except:
+
+        pass
 
 
   def _setup_signal_handlers (self):
@@ -62,17 +79,21 @@ class Getmail ():
     self.exit ()
 
 
-  def _setup_account_thread (self, account):
-    """Sets up the thread for an account"""
+  def _setup_account (self, user, config, interval, limit):
+    """Creates the thread for an account"""
 
-    settings = self._accounts[account]
+    config_dir = os.path.dirname (config)
+    config_name = os.path.basename (config)
+    lock_path = "%s.lock" % os.path.splitext (config)[0]
 
-    lock_path = "%s/%s.lock" % (self._config_dir, account)
-    config_file = "%s.rc" % account
+    command = [
+      "/usr/bin/sudo", "-u", user, "-H", "/usr/bin/setlock", "-n", lock_path,
+      "/usr/bin/getmail", "--getmaildir", config_dir, "--rcfile", config_name
+    ]
 
-    command = ["/usr/bin/setlock", "-n", lock_path, "/usr/bin/getmail", "--getmaildir", self._config_dir, "--rcfile", config_file]
+    t = Thread (None, self._account_handler, None, [command, interval, limit])
 
-    self._threads[account] = Thread (None, self._account_handler, None, [command, settings["interval"], settings["limit"]])
+    self._threads.append (t)
 
 
   def _account_handler (self, command, interval, limit):

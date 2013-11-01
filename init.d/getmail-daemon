@@ -11,11 +11,11 @@
 
 set -e
 
-NAME=getmail
-PIDFILE=/home/mmawdsley/getmail/getmail.pid
-USER=mmawdsley
-GROUP=mmawdsley
-DAEMON=/home/mmawdsley/getmail/getmail.py
+NAME=getmail-daemon
+PIDFILE=/var/run/getmail-daemon.pid
+USER=root
+GROUP=root
+DAEMON=/usr/sbin/getmail-daemon
 
 . /lib/lsb/init-functions
 

@@ -11,4 +11,4 @@ Setup
 * Copy the init.d/getmail-daemon script into /etc/init.d
 * Copy getmail.py to /usr/sbin/getmail-daemon
 * Copy config.example to /etc/getmail-daemon.conf and add your configuration
-* Run "service getmail-wrapper start" to start
+* Run "service getmail-daemon start" to start

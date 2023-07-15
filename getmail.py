@@ -118,7 +118,7 @@ class Getmail ():
     """Runs the command killing it if it exceeds the limit"""
 
     end = datetime.now () + timedelta (minutes=limit)
-    p = Popen (command)
+    p = Popen (command, preexec_fn=os.setsid)
 
     while True:
 
@@ -126,7 +126,7 @@ class Getmail ():
         return
 
       if datetime.now () > end:
-        p.kill ()
+        os.killpg (p.pid, signal.SIGTERM)
         self._log_kill (p.pid, command, limit)
         return
 

@@ -15,7 +15,7 @@ NAME=getmail-daemon
 PIDFILE=/var/run/getmail-daemon.pid
 USER=root
 GROUP=root
-DAEMON=/usr/local/sbin/getmail-daemon
+DAEMON=/usr/local/sbin/getmail-daemon-venv
 
 . /lib/lsb/init-functions
 

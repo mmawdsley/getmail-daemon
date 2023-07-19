@@ -1,14 +1,27 @@
 getmail-daemon
 ==============
 
-Wrapper for the getmail utility which periodically runs multiple configurations, killing processes if they hang for too long.
+Wrapper for the getmail utility which uses the idle feature to be
+notified of new messages as they arrive, fetching them with getmail:
 
 * http://pyropus.ca/software/getmail/
 
 Setup
 -----
 
-* Copy the init.d/getmail-daemon script into /etc/init.d
-* Copy getmail.py to /usr/sbin/getmail-daemon
-* Copy config.example to /etc/getmail-daemon.conf and add your configuration
-* Run "service getmail-daemon start" to start
+Python venv is used for the required packages so there's a small
+amount of setup needed, along with a wrapper shell script to source
+them.
+
+```
+cp init.d/getmail-daemon /etc/init.d/
+cp getmail.sh /usr/sbin/getmail-daemon-venv
+cp getmail.py /usr/sbin/getmail-daemon
+cp config.example /etc/getmail-daemon.conf
+cp requirements.txt to /root
+cd /root
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+service getmail-daemon start
+```

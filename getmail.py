@@ -213,6 +213,7 @@ class Getmail(object):
         self._idle(account)
       except (ConnectionResetError, TimeoutError, imaplib.IMAP4.abort) as err:
         logging.error("Caught {0}".format(err))
+        account.disconnect()
       except Exception as err:
         logging.error(err)
         logging.error("Caught exception {0}".format(err))
@@ -220,13 +221,13 @@ class Getmail(object):
       except:
         err = sys.exc_info()[0]
         logging.error("Caught something else {0}".format(err))
+        account.disconnect()
 
     logging.info("%s idle wrapper closing" % account.name)
 
   def _idle(self, account):
     """Idles the mailbox, updating the count on change"""
     logging.info("_idle %s" % account.name)
-    # account.connect()
     self._update_count(account)
 
     while self._running:
@@ -236,7 +237,6 @@ class Getmail(object):
       self._update_count(account)
 
     account.disconnect()
-    # connection.logout()
 
   def _update_count(self, account):
     """Update the message count"""

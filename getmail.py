@@ -36,7 +36,11 @@ class GetmailAccount(object):
     logging.info("Disconnecting %s" % self.name)
 
     if self._connection:
-      self._connection.logout()
+      try:
+        self._connection.logout()
+      except imaplib.IMAP4.error as err:
+        logging.error("Logout threw error {0}".format(err))
+
       self._connection = None
 
   def idle(self, timeout):

@@ -201,7 +201,7 @@ class Getmail(object):
     self._config_path = config if config else "/etc/getmail-daemon.conf"
     self._running = False
     self._threads = []
-    self._timeout = 30
+    self._timeout = 60
     self._accounts = {}
     self._max_delay = 60
 

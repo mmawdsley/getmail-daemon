@@ -18,6 +18,25 @@ from datetime import datetime, timedelta
 from time import sleep
 from threading import Thread
 
+logger = None
+
+def main():
+  parser = ArgumentParser()
+  parser.add_argument("--config")
+  parser.add_argument("--debug", action="store_true")
+
+  args = parser.parse_args();
+
+  level = logging.INFO if args.debug else logging.WARNING
+
+  logger = GetmailLogger(level)
+  getmail = Getmail(args.config)
+
+  try:
+    getmail.start()
+  except KeyboardInterrupt:
+    getmail.exit()
+
 class GetmailLogger(object):
   """Wrapper for the logger service."""
 
@@ -57,9 +76,8 @@ class GetmailLogger(object):
 class GetmailAccount(object):
   """Connects to an IMAP server and idles a mailbox to query the number of unseen messages."""
 
-  def __init__(self, logger, name, user, config_path, limit):
+  def __init__(self, name, user, config_path, limit):
     self.name = name
-    self._logger = logger
     self._user = user
     self._limit = limit
     self._server = None
@@ -73,20 +91,20 @@ class GetmailAccount(object):
   def disconnect(self):
     """Disconnect from the IMAP server"""
 
-    self._logger.debug("Disconnecting %s" % self.name)
+    logger.debug("Disconnecting %s" % self.name)
 
     if self._connection:
       try:
         self._connection.logout()
       except imaplib.IMAP4.error as err:
-        self._logger.error("Logout threw error {0}".format(err))
+        logger.error("Logout threw error {0}".format(err))
 
       self._connection = None
 
   def idle(self, timeout):
     """Idle the mailbox"""
 
-    self._logger.debug("Idling %s" % self.name)
+    logger.debug("Idling %s" % self.name)
 
     connection = self._get_connection()
     connection.idle()
@@ -96,7 +114,7 @@ class GetmailAccount(object):
   def get_count(self):
     """Return the number of unseen emails"""
 
-    self._logger.debug("Getting count for %s" % self.name)
+    logger.debug("Getting count for %s" % self.name)
 
     connection = self._get_connection()
     status = connection.folder_status("INBOX", 'UNSEEN')
@@ -105,7 +123,7 @@ class GetmailAccount(object):
 
   def fetch(self):
     """Fetch the emails for the account"""
-    self._logger.debug("Fetching emails for %s" % self.name)
+    logger.debug("Fetching emails for %s" % self.name)
 
     end = datetime.now() + timedelta(minutes=self._limit)
     p = Popen(self._command)
@@ -123,7 +141,7 @@ class GetmailAccount(object):
 
   def _connect(self):
     """Connect to the IMAP server"""
-    self._logger.debug("Connecting %s" % self.name)
+    logger.debug("Connecting %s" % self.name)
 
     context = ssl._create_unverified_context()
 
@@ -147,7 +165,7 @@ class GetmailAccount(object):
   def _load_config(self, config_path):
     """Load in the IMAP configuration from the given path."""
 
-    self._logger.debug("Loading IMAP configuration for %s" % self.name)
+    logger.debug("Loading IMAP configuration for %s" % self.name)
 
     config_dir = os.path.dirname(config_path)
     config_name = os.path.basename(config_path)
@@ -177,14 +195,13 @@ class GetmailAccount(object):
 class Getmail(object):
   """Connects to multiple IMAP mailboxes to immediately fetch new emails when they arrive."""
 
-  def __init__(self, logger, config = None):
+  def __init__(self, config = None):
     self._config_path = config if config else "/etc/getmail-daemon.conf"
     self._running = False
     self._threads = []
     self._timeout = 30
     self._accounts = {}
     self._max_delay = 60
-    self._logger = logger
 
     self._setup_signal_handlers()
     self._load_config()
@@ -206,20 +223,20 @@ class Getmail(object):
   def exit(self):
     """Stops the class"""
 
-    self._logger.debug("Exiting...")
+    logger.debug("Exiting...")
     self._running = False
 
   def _load_config(self):
     """Loads in the configuration"""
 
-    self._logger.debug("Loading configuration from %s" % self._config_path)
+    logger.debug("Loading configuration from %s" % self._config_path)
 
     parser = ConfigParser()
     files = parser.read(self._config_path)
 
 
     for section in parser.sections():
-      self._logger.debug("Loaded section %s" % section)
+      logger.debug("Loaded section %s" % section)
 
       try:
         user = parser.get(section, "user")
@@ -227,12 +244,12 @@ class Getmail(object):
         limit = parser.getint(section, "limit")
       except:
         err = sys.exc_info()[0]
-        self._logger.error("Error when setting up account", err)
+        logger.error("Error when setting up account", err)
         continue
 
-      self._logger.debug("Creating account %s" % section)
-      account = GetmailAccount(self._logger, section, user, config, limit)
-      self._logger.debug("Created account %s" % section)
+      logger.debug("Creating account %s" % section)
+      account = GetmailAccount(section, user, config, limit)
+      logger.debug("Created account %s" % section)
 
       thread = Thread(target=self._idle_wrapper, args=(account,))
       self._threads.append(thread)
@@ -246,12 +263,12 @@ class Getmail(object):
   def _signal_handler(self, signum, frame):
     """Handles signals sent to this process"""
 
-    self._logger.debug("signal handler called")
+    logger.debug("signal handler called")
     self.exit()
 
   def _idle_wrapper(self, account):
     """Wrapper for the idle method"""
-    self._logger.debug("_idle_wrapper %s" % account.name)
+    logger.debug("_idle_wrapper %s" % account.name)
 
     delay = 2
 
@@ -260,29 +277,29 @@ class Getmail(object):
         self._idle(account)
         delay = 2
       except (ConnectionResetError, TimeoutError, imaplib.IMAP4.abort) as err:
-        self._logger.error("Caught {0}".format(err))
+        logger.error("Caught {0}".format(err))
         account.disconnect()
         delay = min(delay * 2, self._max_delay)
-        self._logger.info("Caught IMAP error, sleeping for %d" % delay)
+        logger.info("Caught IMAP error, sleeping for %d" % delay)
         sleep(delay)
       except Exception as err:
-        self._logger.error(err)
-        self._logger.error("Caught exception {0}".format(err))
+        logger.error(err)
+        logger.error("Caught exception {0}".format(err))
         self.exit()
       except:
         err = sys.exc_info()[0]
-        self._logger.error("Caught something else {0}".format(err))
+        logger.error("Caught something else {0}".format(err))
         self.exit()
 
-    self._logger.debug("%s idle wrapper closing" % account.name)
+    logger.debug("%s idle wrapper closing" % account.name)
 
   def _idle(self, account):
     """Idles the mailbox, updating the count on change"""
-    self._logger.debug("_idle %s" % account.name)
+    logger.debug("_idle %s" % account.name)
     self._update_count(account)
 
     while self._running:
-      self._logger.debug("Idling %s..." % account.name)
+      logger.debug("Idling %s..." % account.name)
       account.idle(self._timeout)
 
       self._update_count(account)
@@ -291,27 +308,13 @@ class Getmail(object):
 
   def _update_count(self, account):
     """Update the message count"""
-    self._logger.debug("Updating count for %s" % account.name)
+    logger.debug("Updating count for %s" % account.name)
     count = account.get_count()
-    self._logger.debug("Count is %d" % count)
+    logger.debug("Count is %d" % count)
 
     if count > 0 and self._running:
-      self._logger.debug("Have new messages, fetching")
+      logger.debug("Have new messages, fetching")
       account.fetch()
 
 if __name__ == "__main__":
-  parser = ArgumentParser()
-  parser.add_argument("--config")
-  parser.add_argument("--debug", action="store_true")
-
-  args = parser.parse_args();
-  level = logging.INFO if args.debug else logging.WARNING
-
-  logger = GetmailLogger(level)
-
-  getmail = Getmail(logger, config = args.config)
-
-  try:
-    getmail.start()
-  except KeyboardInterrupt:
-    getmail.exit()
+  main()

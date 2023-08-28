@@ -83,15 +83,13 @@ class GetmailAccount(object):
     self._password = None
     self._command = None
     self._connection = None
-    self._connected = None
 
     self._load_config(config_path)
 
   def disconnect(self):
     """Disconnect from the IMAP server"""
 
-    time_connected = time() - self._connected
-    logger.debug("Disconnecting %s after %.1f" % (self.name, time_connected))
+    logger.debug("Disconnecting %s" % self.name)
 
     if self._connection:
       try:
@@ -105,11 +103,15 @@ class GetmailAccount(object):
     """Idle the mailbox"""
 
     logger.debug("Idling %s" % self.name)
+    start = time()
 
     connection = self._get_connection()
+
     connection.idle()
     connection.idle_check(timeout=timeout)
     connection.idle_done()
+
+    return time() - start
 
   def get_count(self):
     """Return the number of unseen emails"""
@@ -148,7 +150,6 @@ class GetmailAccount(object):
     self._connection = IMAPClient(host=self._server, ssl_context=context)
     self._connection.login(self._username, self._password)
     self._connection.select_folder("INBOX", readonly=True)
-    self._connected = time()
 
     return self._connection
 
@@ -296,12 +297,12 @@ class Getmail(object):
 
   def _idle(self, account):
     """Idles the mailbox, updating the count on change"""
-    logger.debug("_idle %s" % account.name)
+    logger.debug("_idle %s for up to %d seconds" % (account.name, self._timeout))
     self._update_count(account)
 
     while self._running:
-      account.idle(self._timeout)
-
+      idled_for = account.idle(self._timeout)
+      logger.debug("idled %s for %.1f seconds" % (account.name, idled_for))
       self._update_count(account)
 
     account.disconnect()

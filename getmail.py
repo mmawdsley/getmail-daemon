@@ -95,7 +95,7 @@ class GetmailAccount(object):
       try:
         self._connection.logout()
       except imaplib.IMAP4.error as err:
-        logger.error("Logout threw error {0}".format(err))
+        logger.error("Logout for {0} threw error {1}".format(self.name, err))
 
       self._connection = None
 

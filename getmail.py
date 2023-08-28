@@ -10,7 +10,6 @@ import sys
 import ssl
 import logging
 
-from logging.handlers import SysLogHandler
 from argparse import ArgumentParser
 from imapclient import IMAPClient
 from subprocess import Popen
@@ -21,6 +20,8 @@ from threading import Thread
 logger = None
 
 def main():
+  global logger
+
   parser = ArgumentParser()
   parser.add_argument("--config")
   parser.add_argument("--debug", action="store_true")
@@ -42,33 +43,18 @@ class GetmailLogger(object):
 
   def __init__(self, level):
     self._pid = os.getpid()
-    self._logger = self._build_logger(level)
 
   def error(self, msg):
     """Log an error message."""
-    self._logger.error(self._format(msg))
+    syslog.syslog(syslog.LOG_ERR, self._format(msg))
 
   def info(self, msg):
     """Log an info message."""
-    self._logger.info(self._format(msg))
+    syslog.syslog(syslog.LOG_INFO, self._format(msg))
 
   def debug(self, msg):
     """Log an debug message."""
-    self._logger.debug(self._format(msg))
-
-  def _build_logger(self, level):
-    """Return a logger with the syslog handler."""
-
-    handler = SysLogHandler(
-      facility=SysLogHandler.LOG_DAEMON,
-      address="/dev/log"
-    )
-
-    logger = logging.getLogger("getmail")
-    logger.setLevel(level)
-    logger.addHandler(handler)
-
-    return logger
+    syslog.syslog(syslog.LOG_DEBUG, self._format(msg))
 
   def _format(self, msg):
     return "getmail[%d] %s" % (self._pid, msg)

@@ -8,7 +8,6 @@ import syslog
 import imaplib
 import sys
 import ssl
-import logging
 
 from argparse import ArgumentParser
 from imapclient import IMAPClient
@@ -66,7 +65,6 @@ class GetmailLogger(object):
     def wrapper(msg):
       msg = self._format(msg)
       syslog.syslog(level, msg)
-      print(level, msg)
 
     return wrapper
 

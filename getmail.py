@@ -285,7 +285,6 @@ class Getmail(object):
     self._update_count(account)
 
     while self._running:
-      logger.debug("Idling %s..." % account.name)
       account.idle(self._timeout)
 
       self._update_count(account)

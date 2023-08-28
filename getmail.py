@@ -28,7 +28,7 @@ def main():
 
   args = parser.parse_args();
 
-  level = logging.INFO if args.debug else logging.WARNING
+  level = syslog.LOG_DEBUG if args.debug else syslog.LOG_NOTICE
 
   logger = GetmailLogger(level)
   getmail = Getmail(args.config)
@@ -41,20 +41,34 @@ def main():
 class GetmailLogger(object):
   """Wrapper for the logger service."""
 
+  LEVEL_MAP = {
+    'emerg': syslog.LOG_EMERG,
+    'alert': syslog.LOG_ALERT,
+    'crit': syslog.LOG_CRIT,
+    'error': syslog.LOG_ERR,
+    'warning': syslog.LOG_WARNING,
+    'notice': syslog.LOG_NOTICE,
+    'info': syslog.LOG_INFO,
+    'debug': syslog.LOG_DEBUG
+  }
+
   def __init__(self, level):
     self._pid = os.getpid()
 
-  def error(self, msg):
-    """Log an error message."""
-    syslog.syslog(syslog.LOG_ERR, self._format(msg))
+    log_mask = syslog.LOG_UPTO(level)
+    syslog.setlogmask(log_mask)
 
-  def info(self, msg):
-    """Log an info message."""
-    syslog.syslog(syslog.LOG_INFO, self._format(msg))
+  def __getattr__(self, name):
+    """Log a message."""
 
-  def debug(self, msg):
-    """Log an debug message."""
-    syslog.syslog(syslog.LOG_DEBUG, self._format(msg))
+    level = self.LEVEL_MAP[name]
+
+    def wrapper(msg):
+      msg = self._format(msg)
+      syslog.syslog(level, msg)
+      print(level, msg)
+
+    return wrapper
 
   def _format(self, msg):
     return "getmail[%d] %s" % (self._pid, msg)

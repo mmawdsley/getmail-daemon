@@ -13,7 +13,7 @@ from argparse import ArgumentParser
 from imapclient import IMAPClient
 from subprocess import Popen
 from datetime import datetime, timedelta
-from time import sleep
+from time import time, sleep
 from threading import Thread
 
 logger = None
@@ -83,13 +83,15 @@ class GetmailAccount(object):
     self._password = None
     self._command = None
     self._connection = None
+    self._connected = None
 
     self._load_config(config_path)
 
   def disconnect(self):
     """Disconnect from the IMAP server"""
 
-    logger.debug("Disconnecting %s" % self.name)
+    time_connected = time() - self._connected
+    logger.debug("Disconnecting %s after %.1f" % (self.name, time_connected))
 
     if self._connection:
       try:
@@ -146,6 +148,7 @@ class GetmailAccount(object):
     self._connection = IMAPClient(host=self._server, ssl_context=context)
     self._connection.login(self._username, self._password)
     self._connection.select_folder("INBOX", readonly=True)
+    self._connected = time()
 
     return self._connection
 

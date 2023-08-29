@@ -2,5 +2,4 @@
 
 user =            # user to run getmail as
 config =          # absolute path to the configuration file
-interval =        # number of minutes to wait after exiting before running again
-limit =           # number of minutes getmail is allowed to run before being kills
+limit =           # number of minutes getmail is allowed to run before being killed

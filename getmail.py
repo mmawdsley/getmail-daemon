@@ -63,13 +63,13 @@ class GetmailLogger(object):
     level = self.LEVEL_MAP[name]
 
     def wrapper(msg):
-      msg = self._format(msg)
+      msg = self._format(name, msg)
       syslog.syslog(level, msg)
 
     return wrapper
 
-  def _format(self, msg):
-    return "getmail[%d] %s" % (self._pid, msg)
+  def _format(self, level, msg):
+    return "getmail[%d] <%s> %s" % (self._pid, level, msg)
 
 class GetmailAccount(object):
   """Connects to an IMAP server and idles a mailbox to query the number of unseen messages."""
